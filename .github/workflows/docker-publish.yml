@@ -34,7 +34,9 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/pt-tracker
+          # Publish using the GitHub repository name, e.g.
+          # ghcr.io/vtree64/pt-docker:latest
+          images: ghcr.io/${{ github.repository }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=tag
