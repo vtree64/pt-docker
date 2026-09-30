@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PT Tracker Migration</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="app-content" style="padding:20px; max-width:720px; margin:0 auto;">
+    <h1>PT Tracker Migration</h1>
+    <p class="text-muted">Use this once to move existing browser IndexedDB data into the new SQLite backend.</p>
+
+    <section class="card mb-4">
+      <h2 class="section-title">1. Export from this browser</h2>
+      <p>If this page is opened on the same origin as your old app, this reads <code>pt_tracker_db</code> from IndexedDB and downloads JSON.</p>
+      <button id="btn-export-idb" class="btn btn-secondary w-100">Export IndexedDB JSON</button>
+    </section>
+
+    <section class="card mb-4">
+      <h2 class="section-title">2. Import into the server</h2>
+      <p>Select the exported JSON file. Existing rows with the same IDs are replaced; other rows are kept.</p>
+      <input id="import-file" type="file" accept="application/json" class="w-100 mb-2">
+      <button id="btn-import-json" class="btn btn-primary w-100">Import JSON to SQLite backend</button>
+    </section>
+
+    <pre id="migration-status" class="text-muted" style="white-space:pre-wrap;"></pre>
+    <p><a href="./">Back to app</a></p>
+  </main>
+  <script type="module" src="migration.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>PT-Tracker</Name>
+  <Repository>ghcr.io/YOUR_GITHUB_USERNAME/pt-tracker:latest</Repository>
+  <Registry>https://ghcr.io/YOUR_GITHUB_USERNAME/pt-tracker</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/YOUR_GITHUB_USERNAME/pt-tracker/issues</Support>
+  <Project>https://github.com/YOUR_GITHUB_USERNAME/pt-tracker</Project>
+  <Overview>Self-hosted PT Tracker: Express server, static frontend, and SQLite data file.</Overview>
+  <Category>Productivity: Tools:</Category>
+  <WebUI>http://[IP]:[PORT:3000]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/pt-tracker/main/unraid/pt-tracker.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/pt-tracker/main/manifest.json</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled/>
+  <DonateText/>
+  <DonateLink/>
+  <Requires/>
+  <Config Name="Web UI Port" Target="3000" Default="3000" Mode="tcp" Description="Port for the PT Tracker web app/API." Type="Port" Display="always" Required="true" Mask="false">3000</Config>
+  <Config Name="App Data" Target="/data" Default="/mnt/user/appdata/pt-tracker" Mode="rw" Description="Persistent SQLite database location." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/pt-tracker</Config>
+  <Config Name="DATA_DIR" Target="DATA_DIR" Default="/data" Description="Directory inside the container where SQLite is stored." Type="Variable" Display="advanced" Required="true" Mask="false">/data</Config>
+</Container>

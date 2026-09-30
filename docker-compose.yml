@@ -1,0 +1,11 @@
+services:
+  pt-tracker:
+    build: .
+    container_name: pt-tracker
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - DATA_DIR=/data
+    volumes:
+      - ./data:/data

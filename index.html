@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PT Tracker</title>
+    <meta name="theme-color" content="#121212">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header id="app-header">
+        <h1 id="header-title">Dashboard</h1>
+    </header>
+
+    <main id="app-content">
+        <!-- Dashboard View -->
+        <section id="view-dashboard" class="view active">
+            <div class="summary-cards">
+                <button class="card dashboard-summary-action" id="neck-summary-card" type="button" aria-label="Log Routine F - Neck">
+                    <div class="card-title">Neck PT Weekly</div>
+                    <div class="card-value" id="neck-streak">0 / 5</div>
+                    <div class="card-action-hint">Log Routine F →</div>
+                </button>
+                <div class="card">
+                    <div class="card-title">Overdue Targets</div>
+                    <div class="card-value" id="overdue-count">0</div>
+                </div>
+            </div>
+
+            <div class="dashboard-section-header">
+                <h2 class="section-title">14-Day Compliance</h2>
+                <div class="matrix-legend"><span class="status-dot status-green-dot"></span>Current</div>
+            </div>
+            <div class="matrix-container">
+                <div class="matrix-header">
+                    <div class="matrix-cell category-name">Movement</div>
+                    <div class="matrix-cell">Stretch</div>
+                    <div class="matrix-cell">Load</div>
+                </div>
+                <div id="dashboard-matrix"></div>
+            </div>
+        </section>
+
+        <!-- Quick Log View -->
+        <section id="view-log" class="view">
+            <div id="log-selection">
+                <h2 class="section-title">Quick Log</h2>
+                <div class="template-list" id="template-list"></div>
+                <button class="btn btn-secondary mt-2 w-100" id="btn-freeform">Freeform Workout</button>
+                <button class="btn btn-secondary mt-2 w-100" id="btn-other">Other Workout (Cardio, etc)</button>
+            </div>
+            
+            <div id="workout-form-container" class="hidden">
+                <button class="btn btn-text mb-2" id="btn-back-log">← Back</button>
+                <h3 id="workout-form-title">Session</h3>
+                
+                <div class="form-group mb-4 mt-2">
+                    <label style="font-size: 14px; font-weight: 600;">Date</label>
+                    <select id="workout-date-select" class="w-100 mt-2 mb-2">
+                        <option value="today">Today</option>
+                        <option value="yesterday">Yesterday</option>
+                        <option value="other">Other...</option>
+                    </select>
+                    <input type="date" id="workout-date-custom" class="w-100 hidden">
+                </div>
+
+                <div id="workout-form-exercises"></div>
+                
+                <div class="form-group mt-4" id="add-exercise-group">
+                    <label>Add Exercise</label>
+                    <select id="exercise-select" class="w-100"></select>
+                    <button class="btn btn-secondary mt-2 w-100" id="btn-add-exercise">Add to Session</button>
+                </div>
+                
+                <div class="form-group mt-4">
+                    <label>Pain/Discomfort Notes</label>
+                    <textarea id="workout-notes" class="w-100" rows="3" placeholder="How did you feel?"></textarea>
+                </div>
+                <button class="btn btn-primary w-100 mt-4" id="btn-save-workout">Save Workout</button>
+            </div>
+        </section>
+
+        <!-- Neck PT View -->
+        <!-- Routines View -->
+        <section id="view-routines" class="view">
+            <h2 class="section-title">Routines</h2>
+            <button id="btn-exercise-editor" class="btn btn-secondary w-100 mb-4" type="button">Exercise Editor</button>
+            <div id="routines-list">
+                <!-- Routines injected here -->
+            </div>
+            <button class="btn btn-primary mt-4 w-100" id="btn-create-routine">Create New Routine</button>
+        </section>
+
+        <!-- History View -->
+        <section id="view-history" class="view">
+            <h2 class="section-title">Muscle Groups Tracker</h2>
+            <div id="muscle-group-tracker" class="muscle-group-grid mb-4">
+                <!-- Muscle group days ago injected here -->
+            </div>
+
+            <h2 class="section-title">Workout History</h2>
+            <div class="history-filters mb-4">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="pt">PT</button>
+                <button class="filter-btn" data-filter="neck">Neck</button>
+                <button class="filter-btn" data-filter="other">Other</button>
+            </div>
+            <div id="history-list"></div>
+        </section>
+        
+        <!-- Exercise Info Modal -->
+        <div id="exercise-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3 id="exercise-modal-title">Exercise</h3>
+                <div id="exercise-modal-tags" class="mb-2"></div>
+                <p id="exercise-modal-desc"></p>
+                <button class="btn btn-primary w-100 mt-4" id="btn-close-exercise-modal">Close</button>
+            </div>
+        </div>
+
+        <!-- Category Modal -->
+        <div id="category-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3 id="category-modal-title">Category</h3>
+                <div id="category-modal-list" class="mt-4 mb-4">
+                    <!-- Exercises injected here -->
+                </div>
+                
+                <div class="form-group" style="border-top: 1px solid var(--border-color); padding-top: 16px;">
+                    <h4 class="mb-2">Add New Exercise</h4>
+                    <input type="text" id="new-ex-name" class="w-100 mb-2" placeholder="Exercise Name">
+                    <button class="btn btn-secondary w-100 mb-4" id="btn-save-new-ex">Save & Add</button>
+                </div>
+                
+                <button class="btn btn-primary w-100" id="btn-close-category-modal">Close</button>
+            </div>
+        </div>
+
+        <!-- Create Routine Modal -->
+        <div id="create-routine-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3>Create New Routine</h3>
+                <div class="form-group mt-4 mb-4">
+                    <label>Routine Name</label>
+                    <input type="text" id="new-routine-name" class="w-100 mt-2 mb-2" placeholder="e.g. Morning Mobility">
+                    <label>Description</label>
+                    <input type="text" id="new-routine-desc" class="w-100 mt-2 mb-4" placeholder="Brief description (optional)">
+                    
+                    <h4>Exercises</h4>
+                    <div id="new-routine-exercises" class="mb-2"></div>
+                    
+                    <select id="new-routine-exercise-select" class="w-100 mb-2"></select>
+                    <button class="btn btn-secondary w-100 mb-4" id="btn-add-routine-ex">Add Exercise to Routine</button>
+                </div>
+                
+                <button class="btn btn-primary w-100 mb-2" id="btn-save-routine">Save Routine</button>
+                <button class="btn btn-text w-100" id="btn-close-create-routine">Cancel</button>
+            </div>
+        </div>
+        
+        <!-- Workout Detail / Edit Modal -->
+        <div id="workout-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3 id="workout-modal-title">Workout</h3>
+                <div id="workout-modal-subtitle" class="template-desc mt-2 mb-4"></div>
+
+                <!-- View mode -->
+                <div id="workout-modal-view">
+                    <div id="workout-modal-entries-view" class="mb-4"></div>
+                    <div id="workout-modal-notes-view" class="hidden"></div>
+                </div>
+
+                <!-- Edit mode -->
+                <div id="workout-modal-edit" class="hidden">
+                    <div class="form-group mb-4">
+                        <label>Date</label>
+                        <input type="date" id="workout-modal-date" class="mt-2">
+                        <label>Time</label>
+                        <input type="time" id="workout-modal-time" class="mt-2">
+                    </div>
+                    <div id="workout-modal-entries-edit"></div>
+                    <div class="form-group mt-4">
+                        <label>Add Exercise</label>
+                        <select id="workout-modal-exercise-select" class="w-100"></select>
+                        <button class="btn btn-secondary mt-2 w-100" id="btn-modal-add-exercise" type="button">Add to Session</button>
+                    </div>
+                    <div class="form-group mt-4">
+                        <label>Pain/Discomfort Notes</label>
+                        <textarea id="workout-modal-notes" class="w-100" rows="3" placeholder="How did you feel?"></textarea>
+                    </div>
+                </div>
+
+                <div id="workout-modal-actions" class="mt-4"></div>
+            </div>
+        </div>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="toast hidden"></div>
+    </main>
+
+    <nav id="bottom-nav">
+        <button class="nav-item active" data-target="view-dashboard">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            <span>Dashboard</span>
+        </button>
+        <button class="nav-item" data-target="view-log">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v16M4 12h16"/></svg>
+            <span>Log</span>
+        </button>
+        <button class="nav-item" data-target="view-routines">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2V7a2 2 0 0 0 -2 -2h-2" /><rect x="9" y="3" width="6" height="4" rx="2" /><line x1="9" y1="12" x2="15" y2="12" /><line x1="9" y1="16" x2="15" y2="16" /></svg>
+            <span>Routines</span>
+        </button>
+        <button class="nav-item" data-target="view-history">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
+            <span>History</span>
+        </button>
+    </nav>
+
+    <script type="module" src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW reg failed:', err));
+            });
+        }
+    </script>
+</body>
+</html>
