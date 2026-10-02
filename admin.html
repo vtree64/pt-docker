@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PT Tracker — Admin</title>
+    <meta name="theme-color" content="#121212">
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <header class="admin-header">
+        <div>
+            <h1>PT Tracker — Admin</h1>
+            <div class="subtitle">Edit exercises and routines on the shared server</div>
+        </div>
+        <a href="./">← Back to app</a>
+    </header>
+
+    <main class="admin-main">
+        <div class="admin-grid">
+            <!-- Exercise editor -->
+            <section class="panel" id="exercise-panel">
+                <div class="panel-header">
+                    <h2>Exercise</h2>
+                    <div class="field">
+                        <label for="exercise-select">Select</label>
+                        <select id="exercise-select" style="min-width:260px;"></select>
+                    </div>
+                </div>
+
+                <div id="exercise-form">
+                    <div class="field-row">
+                        <div class="grow">
+                            <label for="ex-name">Name</label>
+                            <input type="text" id="ex-name" maxlength="120" placeholder="Exercise name">
+                        </div>
+                        <div class="btn-row" style="flex:0 0 auto;">
+                            <button class="btn btn-primary" id="ex-save">Save</button>
+                            <button class="btn btn-danger" id="ex-delete">Delete</button>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <label for="ex-instructions">Instructions</label>
+                        <textarea id="ex-instructions" rows="2" placeholder="Optional notes / how to perform"></textarea>
+                    </div>
+
+                    <div class="section">
+                        <h3>PT Categories</h3>
+                        <table class="category-table">
+                            <thead>
+                                <tr><th style="text-align:left;">Category</th><th>Stretch</th><th>Load</th></tr>
+                            </thead>
+                            <tbody id="category-rows"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="section">
+                        <h3>Muscle Groups</h3>
+                        <div class="chip-grid" id="muscle-chips"></div>
+                    </div>
+
+                    <div class="section">
+                        <h3>Routine Membership</h3>
+                        <div class="membership-list" id="membership-list"></div>
+                    </div>
+
+                    <div class="error-text" id="exercise-error"></div>
+                </div>
+            </section>
+
+            <!-- Routine manager -->
+            <aside>
+                <section class="panel" id="routine-panel">
+                    <div class="panel-header">
+                        <h2>Routine</h2>
+                        <div class="field">
+                            <label for="routine-select">Select</label>
+                            <select id="routine-select" style="min-width:220px;"></select>
+                        </div>
+                    </div>
+                    <div class="routine-summary" id="routine-summary">
+                        <span class="empty">Select a routine to view or edit it.</span>
+                    </div>
+                    <div class="btn-row" style="margin-top:16px;">
+                        <button class="btn btn-secondary" id="routine-edit" disabled>Edit / Rename / Delete</button>
+                    </div>
+                </section>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Routine editor modal -->
+    <div class="modal-overlay" id="routine-modal">
+        <div class="modal">
+            <h2 id="routine-modal-title">Edit Routine</h2>
+            <div class="modal-sub" id="routine-modal-sub"></div>
+
+            <label for="rt-name">Name</label>
+            <input type="text" id="rt-name" maxlength="120" placeholder="Routine name">
+
+            <div class="section">
+                <label for="rt-desc">Description</label>
+                <input type="text" id="rt-desc" maxlength="200" placeholder="Short description (optional)">
+            </div>
+
+            <div class="section">
+                <h3>Exercises in this routine</h3>
+                <div class="routine-ex-list" id="rt-ex-list"></div>
+                <div class="add-ex-row">
+                    <select id="rt-add-select"></select>
+                    <button class="btn btn-secondary" id="rt-add-btn" type="button">Add</button>
+                </div>
+            </div>
+
+            <div class="error-text" id="routine-error"></div>
+
+            <div class="actions">
+                <button class="btn btn-danger" id="rt-delete" type="button">Delete Routine</button>
+                <div class="right">
+                    <button class="btn btn-secondary" id="rt-cancel" type="button">Cancel</button>
+                    <button class="btn btn-primary" id="rt-save" type="button">Save Routine</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script type="module" src="admin.js"></script>
+</body>
+</html>
