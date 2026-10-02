@@ -81,3 +81,11 @@ export async function saveExerciseAndTemplates(exercise, templates) {
         body: JSON.stringify({ exercise, templates })
     });
 }
+
+// Delete an exercise and remove it from every routine atomically.
+export async function deleteExerciseCascade(id) {
+    await request('/admin/delete-exercise', {
+        method: 'POST',
+        body: JSON.stringify({ id })
+    });
+}

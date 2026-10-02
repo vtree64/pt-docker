@@ -149,6 +149,25 @@ app.post('/api/save-exercise-and-templates', (req, res) => {
   }
 });
 
+// Delete an exercise and remove it from every routine in one transaction,
+// so no template is left referencing a missing exercise.
+app.post('/api/admin/delete-exercise', (req, res) => {
+  const id = (req.body || {}).id;
+  if (!id || typeof id !== 'string') return res.status(400).json({ error: 'id is required' });
+  const tx = db.transaction(() => {
+    const templates = db.prepare('SELECT data FROM templates').all().map(rowToItem);
+    for (const template of templates) {
+      if (Array.isArray(template.exercises) && template.exercises.some(e => e.id === id)) {
+        template.exercises = template.exercises.filter(e => e.id !== id);
+        putItem('templates', template);
+      }
+    }
+    db.prepare('DELETE FROM exercises WHERE id = ?').run(id);
+  });
+  tx();
+  res.json({ ok: true });
+});
+
 app.post('/api/migrate/import', (req, res) => {
   const payload = req.body || {};
   try {

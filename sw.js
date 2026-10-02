@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pt-tracker-v18';
+const CACHE_NAME = 'pt-tracker-v19';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -9,7 +9,10 @@ const ASSETS_TO_CACHE = [
   './seed.js',
   './manifest.json',
   './migration.html',
-  './migration.js'
+  './migration.js',
+  './admin.html',
+  './admin.css',
+  './admin.js'
 ];
 
 self.addEventListener('install', event => {

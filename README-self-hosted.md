@@ -11,6 +11,7 @@
   - `POST /api/:store/bulk`
   - `DELETE /api/:store/:id`
   - `POST /api/save-exercise-and-templates`
+  - `POST /api/admin/delete-exercise` (deletes an exercise and removes it from all routines atomically)
 - Valid stores are `exercises`, `templates`, and `workout_logs`.
 - `db.js` is now a fetch-based client with the same exported function names/signatures used by `app.js`, `editor.js`, and `seed.js`.
 
@@ -37,6 +38,24 @@ http://raspberrypi.local:3000/
 Data survives rebuilds in `PT/data` because `docker-compose.yml` mounts `./data:/data`.
 
 For a local hostname, enable mDNS/Avahi on the host and use its `.local` name, or add a DHCP/static DNS entry on your router.
+
+## Desktop admin page
+
+A desktop-oriented page for editing exercises and routines is served at:
+
+```text
+http://SERVER_LAN_IP:3000/admin.html
+```
+
+It is best used from a PC/laptop. Features:
+
+- Select an existing exercise from an alphabetized list, or add a new one.
+- Edit the exercise name, instructions, PT category checkboxes (stretch/load per category), and muscle groups.
+- Toggle which routines include the exercise, and set per-routine default sets/reps.
+- Rename or delete an exercise (deleting also removes it from every routine).
+- Select a routine from a second dropdown, or add a new one; this opens a dialog to rename, edit its exercises, or delete the routine.
+
+There is also a small “Open desktop admin →” link in the Routines tab of the mobile app.
 
 ## Unraid without CLI access
 
