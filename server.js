@@ -15,7 +15,12 @@ const STORES = new Set(['exercises', 'templates', 'workout_logs']);
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 
 const db = new Database(DB_PATH);
-db.pragma('journal_mode = WAL');
+// Use the default rollback journal (a single .sqlite file) instead of WAL.
+// Unraid's /mnt/user is a FUSE filesystem where WAL's extra -wal/-shm files
+// (and their mmap-based shared memory) are less reliable, and a single file
+// is simpler to persist, inspect, and back up. Write volume here is trivial,
+// so the performance trade-off is not a concern.
+db.pragma('journal_mode = DELETE');
 db.pragma('foreign_keys = ON');
 
 db.exec(`
@@ -93,8 +98,15 @@ function putItem(store, item) {
   return item.id;
 }
 
+function storeCounts() {
+  return Object.fromEntries([...STORES].map(store => [
+    store,
+    db.prepare(`SELECT COUNT(*) AS n FROM ${store}`).get().n
+  ]));
+}
+
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true });
+  res.json({ ok: true, db: DB_PATH, counts: storeCounts() });
 });
 
 app.get('/api/:store', assertStore, (req, res) => {
@@ -198,4 +210,6 @@ app.use(express.static(__dirname, { extensions: ['html'] }));
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`PT Tracker listening on http://0.0.0.0:${PORT}`);
   console.log(`SQLite database: ${DB_PATH}`);
+  const counts = storeCounts();
+  console.log(`Loaded ${counts.exercises} exercises, ${counts.templates} templates, ${counts.workout_logs} workout logs.`);
 });

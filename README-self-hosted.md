@@ -98,6 +98,34 @@ Build/publish the image to Docker Hub instead, then use the same Unraid settings
 yourdockerhubuser/pt-tracker:latest
 ```
 
+### IMPORTANT: Unraid recreates containers on every reboot
+
+Unraid removes and recreates all containers when the server reboots. Anything the container wrote **outside of a mapped volume** lives in the container's writable layer, which is discarded on reboot. If the `Path: /mnt/user/appdata/pt-tracker -> /data` mapping is missing or wrong, the SQLite file is written into that layer and **all data is lost on the next reboot**.
+
+Verify the mapping is in place:
+
+1. Unraid → Docker → `pt-tracker` → (pencil) Edit Container → **Extra Paths** must contain:
+   ```text
+   Host: /mnt/user/appdata/pt-tracker   Container: /data
+   ```
+2. Confirm the database file actually exists on the host. Unraid → Main → Terminal (or the Files app):
+   ```text
+   ls -la /mnt/user/appdata/pt-tracker
+   ```
+   You should see `pt-tracker.sqlite` with a reasonable size and a recent modified time. (With the current build there is only this one file — WAL's extra `-wal`/`-shm` files are no longer used.)
+3. After a reboot, check the container log (Docker → `pt-tracker` → View Logs). It now prints where the DB is and how many rows it loaded, e.g. `Loaded 60 exercises, 6 templates, 123 workout logs.` If it says `0 workout logs` after a reboot, the volume is not persisting.
+
+### If data was lost
+
+- **Fix the path mapping first**, then restore data (a restore into a container without the mapping will be lost again on the next reboot).
+- **Re-import from your browser's IndexedDB.** The original on-device data is still in the browser you used before migrating (migration does not delete it). Open `migration.html` from that *original* origin (the URL the old app ran under — e.g. `localhost` or the old LAN address), click **Export IndexedDB JSON**, then import that file on the server's `migration.html`. This restores everything up to the point you migrated.
+- **Changes made only through the new app after the migration** exist only in the SQLite file. If that file is gone and you have no backup, those specific changes cannot be recovered.
+- Check any Unraid backups you keep (e.g. to an external drive) for `/mnt/user/appdata/pt-tracker`.
+
+### Backups
+
+The server keeps a single SQLite file, so the simplest backup is copying it. For a no-CLI workflow, open `migration.html` and use **Download server backup (JSON)** — it saves everything (exercises, templates, workout logs) to a file you can keep anywhere and re-import later with the same page. Consider doing this after big changes, and keep the JSON export plus the `appdata/pt-tracker` folder in your regular Unraid backup set.
+
 ## One-time migration from IndexedDB
 
 Open `migration.html`:

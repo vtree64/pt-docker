@@ -58,3 +58,20 @@ document.getElementById('btn-export-idb').addEventListener('click', () => {
 document.getElementById('btn-import-json').addEventListener('click', () => {
   importJson().catch(error => status(`Import failed: ${error.message}`));
 });
+
+async function downloadBackup() {
+  const res = await fetch('./api/export');
+  if (!res.ok) throw new Error(`Server returned ${res.status}`);
+  const data = await res.json();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `pt-tracker-server-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  status(`Downloaded backup: ${STORES.map(store => `${(data[store] || []).length} ${store}`).join(', ')}.`);
+}
+
+document.getElementById('btn-download-backup').addEventListener('click', () => {
+  downloadBackup().catch(error => status(`Backup failed: ${error.message}`));
+});
