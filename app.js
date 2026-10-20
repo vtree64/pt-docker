@@ -79,13 +79,16 @@ async function loadData() {
     ]);
 
     exercisesMap = {};
-    exList.forEach(ex => exercisesMap[ex.id] = ex);
+    (Array.isArray(exList) ? exList : []).forEach(ex => {
+        if (ex && ex.id != null) exercisesMap[ex.id] = ex;
+    });
     // Normalize: guarantee the array fields every renderer relies on exist,
     // even for legacy/recovered rows that may be missing them.
-    templatesList = templates.map(t => ({ ...t, exercises: Array.isArray(t.exercises) ? t.exercises : [] }));
-    workoutLogs = logs.map(log => ({ ...log, entries: Array.isArray(log.entries) ? log.entries : [] }));
+    templatesList = (Array.isArray(templates) ? templates : []).map(t => ({ ...t, exercises: Array.isArray(t.exercises) ? t.exercises : [] }));
+    workoutLogs = (Array.isArray(logs) ? logs : []).map(log => ({ ...log, entries: Array.isArray(log.entries) ? log.entries : [] }));
     // Sort logs descending by date
     workoutLogs.sort((a, b) => b.date - a.date);
+    console.log(`[loadData] exercises=${Object.keys(exercisesMap).length}, templates=${templatesList.length}, logs=${workoutLogs.length}`);
 }
 
 async function refreshDataAndRender(viewId = currentView) {
@@ -533,7 +536,16 @@ function openWorkoutForm(kind, initialExercises = [], routine = null) {
     document.getElementById('workout-form-title').textContent = title;
     
     // Populate select
-    populateExerciseSelect(document.getElementById('exercise-select'));
+    try {
+        populateExerciseSelect(document.getElementById('exercise-select'));
+    } catch (err) {
+        console.error('populateExerciseSelect failed:', err);
+        showToast('Could not load exercise list: ' + (err && err.message ? err.message : err));
+    }
+    if (Object.keys(exercisesMap).length === 0) {
+        console.warn('exercisesMap is empty — server returned no exercises');
+        showToast('No exercises found on the server. Open the admin page to check.');
+    }
     
     if (kind === 'neck' || isChecklist) {
         document.getElementById('add-exercise-group').classList.add('hidden');

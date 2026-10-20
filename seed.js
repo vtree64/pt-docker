@@ -169,24 +169,34 @@ export function fillGroupedExerciseSelect(selectEl, exerciseList, { leadingOptio
   selectEl.innerHTML = '';
   leadingOptions.forEach(([label, value]) => selectEl.add(new Option(label, value)));
 
+  // Be tolerant of malformed rows (e.g. recovered data missing name/id) so one
+  // bad exercise can never blank the whole dropdown.
+  const safeName = ex => (ex && ex.name != null && String(ex.name).trim() !== '') ? String(ex.name) : 'Unknown exercise';
+  const safeId = ex => (ex && ex.id != null) ? ex.id : '';
+
   const groups = { load: [], stretch: [], reformer: [], other: [] };
-  exerciseList.forEach(ex => groups[exerciseGroup(ex)].push(ex));
+  (Array.isArray(exerciseList) ? exerciseList : []).forEach(ex => {
+    if (!ex) return;
+    let group;
+    try { group = exerciseGroup(ex); } catch (_) { group = 'other'; }
+    groups[group].push(ex);
+  });
 
   // Keep muscle-group placeholders at the top of "Other" (existing behavior).
   groups.other.sort((a, b) => {
     const aPh = MUSCLE_PLACEHOLDERS.includes(a.name) ? 0 : 1;
     const bPh = MUSCLE_PLACEHOLDERS.includes(b.name) ? 0 : 1;
     if (aPh !== bPh) return aPh - bPh;
-    return a.name.localeCompare(b.name);
+    return safeName(a).localeCompare(safeName(b));
   });
-  ['load', 'stretch', 'reformer'].forEach(g => groups[g].sort((a, b) => a.name.localeCompare(b.name)));
+  ['load', 'stretch', 'reformer'].forEach(g => groups[g].sort((a, b) => safeName(a).localeCompare(safeName(b))));
 
   EXERCISE_GROUPS.forEach(({ id, label }) => {
     if (groups[id].length === 0) return;
     const optgroup = document.createElement('optgroup');
     optgroup.label = label;
     groups[id].forEach(ex => {
-      const opt = new Option(ex.name, ex.id);
+      const opt = new Option(safeName(ex), safeId(ex));
       optgroup.appendChild(opt);
     });
     selectEl.appendChild(optgroup);
