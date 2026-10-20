@@ -80,19 +80,28 @@ async function loadData() {
 
     exercisesMap = {};
     exList.forEach(ex => exercisesMap[ex.id] = ex);
-    templatesList = templates;
-    workoutLogs = logs;
+    // Normalize: guarantee the array fields every renderer relies on exist,
+    // even for legacy/recovered rows that may be missing them.
+    templatesList = templates.map(t => ({ ...t, exercises: Array.isArray(t.exercises) ? t.exercises : [] }));
+    workoutLogs = logs.map(log => ({ ...log, entries: Array.isArray(log.entries) ? log.entries : [] }));
     // Sort logs descending by date
     workoutLogs.sort((a, b) => b.date - a.date);
 }
 
 async function refreshDataAndRender(viewId = currentView) {
     await loadData();
-    renderDashboard();
-    renderTemplates();
-    renderRoutinesTab();
-    renderHistory();
-    if (viewId === 'view-log') populateExerciseSelect(document.getElementById('exercise-select'));
+    // Render each section independently so a problem in one view never blanks
+    // the rest of the app.
+    const steps = [
+        () => renderDashboard(),
+        () => renderTemplates(),
+        () => renderRoutinesTab(),
+        () => renderHistory(),
+        () => { if (viewId === 'view-log') populateExerciseSelect(document.getElementById('exercise-select')); }
+    ];
+    for (const step of steps) {
+        try { step(); } catch (err) { console.error('Render step failed:', err); }
+    }
 }
 
 // --- Navigation ---
@@ -121,7 +130,7 @@ async function switchView(viewId) {
         await refreshDataAndRender(viewId);
     } catch (error) {
         console.error(error);
-        showToast('Could not refresh latest data.');
+        showToast('Could not refresh latest data.' + (error && error.message ? ` (${error.message})` : ''));
     }
 }
 
