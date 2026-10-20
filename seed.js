@@ -125,9 +125,70 @@ export const REFORMER_EXERCISES = [
     ["Seated Rotation (passive end-range)", "Back Anti-Rotation", "stretch"], ["Plank with Single Arm / Leg Reach", "Back Anti-Rotation", "load"], ["Oblique Work (resisted rotation)", "Back Anti-Rotation", "load"],
     ["Cat-Cow (on carriage)", "Back Anti-Extension", "stretch"], ["Plank (neutral spine)", "Back Anti-Extension", "load"], ["Dead Bug (strap resistance)", "Back Anti-Extension", "load"],
     ["Supported Extension (on Box)", "Back Anti-Flexion", "stretch"], ["The Hundred (neutral lumbar spine)", "Back Anti-Flexion", "load"], ["Plank (anti-flexion focus)", "Back Anti-Flexion", "load"]
-].map(([name, category, type], index) => ({ id: `r${index + 1}`, name, categories: [category], type, instructions: "Session D reformer checklist" }));
+].map(([name, category, type], index) => ({ id: `r${index + 1}`, name, categories: [category], type, reformer: true, instructions: "Session D reformer checklist" }));
 
 SEED_EXERCISES.push(...REFORMER_EXERCISES);
+
+// Mark named Reformer exercises so dropdowns can group them separately.
+SEED_EXERCISES.forEach(ex => {
+  if (ex.reformer === undefined && /reformer/i.test(ex.name)) ex.reformer = true;
+});
+
+// --- Exercise grouping (Load / Stretch / Reformer) ---
+
+// True when an exercise belongs in the "Reformer" dropdown group.
+// Prefers an explicit `reformer` flag; falls back to name/instructions so
+// legacy or imported data without the flag still groups correctly.
+export function isReformerExercise(ex) {
+  if (ex && typeof ex.reformer === 'boolean') return ex.reformer;
+  return /reformer/i.test(ex?.name || '') || /reformer/i.test(ex?.instructions || '');
+}
+
+// Which dropdown group an exercise belongs to.
+export function exerciseGroup(ex) {
+  if (isReformerExercise(ex)) return 'reformer';
+  if (ex?.type === 'load') return 'load';
+  if (ex?.type === 'stretch') return 'stretch';
+  return 'other';
+}
+
+// Group order used in exercise dropdowns.
+export const EXERCISE_GROUPS = [
+  { id: 'load', label: 'Load' },
+  { id: 'stretch', label: 'Stretch' },
+  { id: 'reformer', label: 'Reformer' },
+  { id: 'other', label: 'Other' }
+];
+
+const MUSCLE_PLACEHOLDERS = ['Chest', 'Shoulders', 'Biceps', 'Triceps', 'Quads', 'Glutes', 'Hamstrings'];
+
+// Fill a <select> with exercises grouped into Load / Stretch / Reformer / Other.
+// `leadingOptions` is a list of [label, value] pairs added first (e.g. a
+// placeholder or an "Add new" option).
+export function fillGroupedExerciseSelect(selectEl, exerciseList, { leadingOptions = [] } = {}) {
+  selectEl.innerHTML = '';
+  leadingOptions.forEach(([label, value]) => selectEl.add(new Option(label, value)));
+
+  const groups = { load: [], stretch: [], reformer: [], other: [] };
+  exerciseList.forEach(ex => groups[exerciseGroup(ex)].push(ex));
+
+  // Keep muscle-group placeholders at the top of "Other" (existing behavior).
+  groups.other.sort((a, b) => {
+    const aPh = MUSCLE_PLACEHOLDERS.includes(a.name) ? 0 : 1;
+    const bPh = MUSCLE_PLACEHOLDERS.includes(b.name) ? 0 : 1;
+    if (aPh !== bPh) return aPh - bPh;
+    return a.name.localeCompare(b.name);
+  });
+  ['load', 'stretch', 'reformer'].forEach(g => groups[g].sort((a, b) => a.name.localeCompare(b.name)));
+
+  EXERCISE_GROUPS.forEach(({ id, label }) => {
+    if (groups[id].length === 0) return;
+    const optgroup = document.createElement('optgroup');
+    optgroup.label = label;
+    groups[id].forEach(ex => optgroup.add(new Option(ex.name, ex.id)));
+    selectEl.appendChild(optgroup);
+  });
+}
 
 const SEED_TEMPLATES = [
     {

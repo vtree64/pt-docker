@@ -308,14 +308,9 @@ function setupEventListeners() {
         newRoutineExercises = [];
         renderNewRoutineExercises();
         
-        // Populate select
-        const select = document.getElementById('new-routine-exercise-select');
-        select.innerHTML = '<option value="">-- Select Exercise --</option>';
-        Object.values(exercisesMap).sort((a, b) => a.name.localeCompare(b.name)).forEach(ex => {
-            const opt = document.createElement('option');
-            opt.value = ex.id;
-            opt.textContent = ex.name;
-            select.appendChild(opt);
+        // Populate select (grouped into Load / Stretch / Reformer / Other)
+        fillGroupedExerciseSelect(document.getElementById('new-routine-exercise-select'), Object.values(exercisesMap), {
+            leadingOptions: [['-- Select Exercise --', '']]
         });
         
         document.getElementById('create-routine-modal').classList.remove('hidden');
@@ -396,6 +391,14 @@ function setupEventListeners() {
     
     document.getElementById('btn-back-log').addEventListener('click', closeWorkoutForm);
     document.getElementById('btn-save-workout').addEventListener('click', saveWorkout);
+
+    // Cardio (Indoor Cycling / Spin)
+    document.getElementById('btn-cardio').addEventListener('click', openCardioForm);
+    document.getElementById('btn-back-cardio').addEventListener('click', closeCardioForm);
+    document.getElementById('btn-save-cardio').addEventListener('click', saveCardio);
+    document.getElementById('cardio-date-select').addEventListener('change', (e) => {
+        document.getElementById('cardio-date-custom').classList.toggle('hidden', e.target.value !== 'other');
+    });
     
     document.getElementById('btn-add-exercise').addEventListener('click', () => {
         const sel = document.getElementById('exercise-select');
@@ -659,6 +662,79 @@ async function saveWorkout() {
     document.querySelector('.nav-item[data-target="view-dashboard"]').click();
 }
 
+// --- Cardio (Indoor Cycling / Spin) ---
+function openCardioForm() {
+    document.getElementById('log-selection').classList.add('hidden');
+    document.getElementById('workout-form-container').classList.add('hidden');
+    document.getElementById('cardio-form-container').classList.remove('hidden');
+
+    document.getElementById('cardio-date-select').value = 'today';
+    document.getElementById('cardio-date-custom').classList.add('hidden');
+    document.getElementById('cardio-date-custom').value = new Date().toLocaleDateString('en-CA');
+    document.getElementById('cardio-duration').value = '';
+    document.getElementById('cardio-distance').value = '';
+    document.getElementById('cardio-calories').value = '';
+    document.getElementById('cardio-notes').value = '';
+    window.scrollTo(0, 0);
+}
+
+function closeCardioForm() {
+    document.getElementById('cardio-form-container').classList.add('hidden');
+    document.getElementById('log-selection').classList.remove('hidden');
+}
+
+function cardioTimestamp() {
+    let ts = Date.now();
+    const sel = document.getElementById('cardio-date-select').value;
+    if (sel === 'yesterday') {
+        ts -= 24 * 60 * 60 * 1000;
+    } else if (sel === 'other') {
+        const custom = document.getElementById('cardio-date-custom').value;
+        if (custom) {
+            const [y, m, d] = custom.split('-');
+            ts = new Date(y, m - 1, d, 12, 0, 0).getTime();
+        }
+    }
+    return ts;
+}
+
+async function saveCardio() {
+    const duration = Number(document.getElementById('cardio-duration').value) || 0;
+    if (!duration) {
+        showToast('Enter a duration in minutes.');
+        return;
+    }
+
+    const log = {
+        id: 'log_' + Date.now(),
+        date: cardioTimestamp(),
+        workout_kind: 'cardio',
+        entries: [],
+        durationMin: duration,
+        distance: document.getElementById('cardio-distance').value.trim(),
+        calories: document.getElementById('cardio-calories').value.trim(),
+        notes: document.getElementById('cardio-notes').value.trim(),
+        routine_id: null,
+        routine_name: null
+    };
+
+    try {
+        await put('workout_logs', log);
+    } catch (err) {
+        console.error(err);
+        showToast('Could not save cardio session. Please try again.');
+        return;
+    }
+
+    workoutLogs.push(log);
+    workoutLogs.sort((a, b) => b.date - a.date);
+    showToast('Cardio session saved!');
+    closeCardioForm();
+
+    // Jump to History so the Cardio tracker updates.
+    document.querySelector('.nav-item[data-target="view-history"]').click();
+}
+
 // --- History ---
 function renderHistory(filter) {
     if (filter) historyFilter = filter;
@@ -703,6 +779,8 @@ function renderHistory(filter) {
         });
     }
 
+    renderCardioTracker();
+
     const filtered = workoutLogs.filter(log => historyFilter === 'all' || log.workout_kind === historyFilter);
     
     if (filtered.length === 0) {
@@ -721,16 +799,25 @@ function renderHistory(filter) {
         const badge = getRoutineBadge(log.routine_id, log.routine_name);
         const badgeHtml = badge ? `<span class="routine-badge" style="background-color:${badge.color}">${badge.letter}</span>` : '';
         
-        let entriesHtml = log.entries.map(ent => {
-            const ex = exercisesMap[ent.exercise_id];
-            const hasPrescription = ent.sets !== '' && ent.sets != null && ent.reps !== '' && ent.reps != null;
-            let details = `<li>${ex ? ex.name : 'Unknown'}${hasPrescription ? ` - ${ent.sets} sets x ${ent.reps}` : ''}${ent.weight ? ' ('+ent.weight+')' : ''}`;
-            if (ent.exercise_notes) {
-                details += `<br><span style="color:var(--text-secondary);font-size:12px;margin-left:8px;">↳ ${ent.exercise_notes}</span>`;
-            }
-            details += `</li>`;
-            return details;
-        }).join('');
+        let entriesHtml;
+        if (log.workout_kind === 'cardio') {
+            const parts = [];
+            if (log.durationMin) parts.push(`${log.durationMin} min`);
+            if (log.distance) parts.push(`${log.distance} mi`);
+            if (log.calories) parts.push(`${log.calories} cal`);
+            entriesHtml = `<li>Indoor Cycling / Spin${parts.length ? ` - ${parts.join(' · ')}` : ''}</li>`;
+        } else {
+            entriesHtml = log.entries.map(ent => {
+                const ex = exercisesMap[ent.exercise_id];
+                const hasPrescription = ent.sets !== '' && ent.sets != null && ent.reps !== '' && ent.reps != null;
+                let details = `<li>${ex ? ex.name : 'Unknown'}${hasPrescription ? ` - ${ent.sets} sets x ${ent.reps}` : ''}${ent.weight ? ' ('+ent.weight+')' : ''}`;
+                if (ent.exercise_notes) {
+                    details += `<br><span style="color:var(--text-secondary);font-size:12px;margin-left:8px;">↳ ${ent.exercise_notes}</span>`;
+                }
+                details += `</li>`;
+                return details;
+            }).join('');
+        }
         
         el.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px; gap:8px;">
@@ -757,9 +844,50 @@ function renderHistory(filter) {
     });
 }
 
+// Cardio Tracker: last indoor cycling / spin session + this week's total.
+function renderCardioTracker() {
+    const trackerEl = document.getElementById('cardio-tracker');
+    if (!trackerEl) return;
+    trackerEl.innerHTML = '';
+
+    const now = Date.now();
+    const msInDay = 24 * 60 * 60 * 1000;
+    const currentDate = new Date(now);
+    const dayOfWeek = currentDate.getDay();
+    const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const startOfWeek = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() - daysSinceMonday).getTime();
+
+    let lastCardio = 0, weekCount = 0, weekMinutes = 0;
+    workoutLogs.forEach(log => {
+        if (log.workout_kind !== 'cardio') return;
+        if (log.date > lastCardio) lastCardio = log.date;
+        if (log.date >= startOfWeek) {
+            weekCount++;
+            weekMinutes += Number(log.durationMin) || 0;
+        }
+    });
+
+    const daysAgo = lastCardio === 0 ? null : Math.floor((now - lastCardio) / msInDay);
+    const card = document.createElement('div');
+    card.className = 'cardio-card';
+    if (daysAgo !== null) {
+        if (daysAgo < 7) card.classList.add('cardio-green');
+        else if (daysAgo <= 10) card.classList.add('cardio-yellow');
+        else card.classList.add('cardio-red');
+    }
+    const daysLabel = daysAgo === null ? 'Never' : daysAgo === 0 ? 'Today' : `${daysAgo}d ago`;
+    card.innerHTML = `
+        <div class="cardio-name">Indoor Cycling / Spin</div>
+        <div class="cardio-days">${daysLabel}</div>
+        <div class="cardio-week">This week: ${weekCount} session${weekCount === 1 ? '' : 's'} · ${weekMinutes} min</div>
+    `;
+    trackerEl.appendChild(card);
+}
+
 // --- History: Workout Detail / Edit / Delete ---
 function getLogTitle(log) {
     if (log.workout_kind === 'neck') return 'Neck Routine';
+    if (log.workout_kind === 'cardio') return 'Cardio';
     if (log.workout_kind === 'other') return 'Other Workout';
     return 'Workout Session';
 }
@@ -771,22 +899,8 @@ function formatLogDate(ts) {
 // Populate an exercise <select> with all exercises: muscle-group
 // placeholders first, then the rest alphabetically.
 function populateExerciseSelect(selectEl) {
-    selectEl.innerHTML = '<option value="">-- Select Exercise --</option>';
-    
-    const targetMuscleGroups = ["Chest", "Shoulders", "Biceps", "Triceps", "Quads", "Glutes", "Hamstrings"];
-    let allExercises = Object.values(exercisesMap);
-    
-    let placeholders = allExercises.filter(ex => targetMuscleGroups.includes(ex.name));
-    let others = allExercises.filter(ex => !targetMuscleGroups.includes(ex.name));
-    
-    placeholders.sort((a, b) => targetMuscleGroups.indexOf(a.name) - targetMuscleGroups.indexOf(b.name));
-    others.sort((a, b) => a.name.localeCompare(b.name));
-    
-    [...placeholders, ...others].forEach(ex => {
-        const opt = document.createElement('option');
-        opt.value = ex.id;
-        opt.textContent = ex.name;
-        selectEl.appendChild(opt);
+    fillGroupedExerciseSelect(selectEl, Object.values(exercisesMap), {
+        leadingOptions: [['-- Select Exercise --', '']]
     });
 }
 
@@ -800,6 +914,7 @@ function openWorkoutModal(logId) {
 
 function closeWorkoutModal() {
     document.getElementById('workout-modal').classList.add('hidden');
+    document.getElementById('workout-modal-cardio').classList.add('hidden');
     modalLogId = null;
     modalEditEntries = [];
 }
@@ -817,7 +932,19 @@ function renderWorkoutModalView(log) {
     const entriesView = document.getElementById('workout-modal-entries-view');
     entriesView.innerHTML = '';
     
-    if (log.entries.length === 0) {
+    if (log.workout_kind === 'cardio') {
+        const parts = [];
+        if (log.durationMin) parts.push(`${log.durationMin} min`);
+        if (log.distance) parts.push(`${log.distance} mi`);
+        if (log.calories) parts.push(`${log.calories} cal`);
+        const row = document.createElement('div');
+        row.className = 'form-exercise';
+        row.innerHTML = `
+            <div class="form-exercise-title">Indoor Cycling / Spin</div>
+            ${parts.length ? `<div class="workout-entry-meta">${parts.join('  ·  ')}</div>` : ''}
+        `;
+        entriesView.appendChild(row);
+    } else if (log.entries.length === 0) {
         entriesView.innerHTML = '<p class="text-muted">No exercises logged for this workout.</p>';
     } else {
         log.entries.forEach(ent => {
@@ -857,10 +984,15 @@ function renderWorkoutModalView(log) {
     
     document.getElementById('workout-modal-view').classList.remove('hidden');
     document.getElementById('workout-modal-edit').classList.add('hidden');
+    document.getElementById('workout-modal-cardio').classList.add('hidden');
     renderWorkoutModalActions('view');
 }
 
 function startWorkoutEdit(log) {
+    if (log.workout_kind === 'cardio') {
+        startCardioEdit(log);
+        return;
+    }
     modalEditEntries = log.entries.map(ent => ({
         entryId: ent.entryId || 'entry_' + Date.now() + Math.random().toString(36).substr(2, 5),
         exercise_id: ent.exercise_id,
@@ -881,7 +1013,24 @@ function startWorkoutEdit(log) {
     
     document.getElementById('workout-modal-view').classList.add('hidden');
     document.getElementById('workout-modal-edit').classList.remove('hidden');
+    document.getElementById('workout-modal-cardio').classList.add('hidden');
     renderWorkoutModalActions('edit');
+}
+
+function startCardioEdit(log) {
+    const d = new Date(log.date);
+    document.getElementById('cardio-modal-date').value = d.toLocaleDateString('en-CA');
+    document.getElementById('cardio-modal-time').value =
+        `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    document.getElementById('cardio-modal-duration').value = log.durationMin ?? '';
+    document.getElementById('cardio-modal-distance').value = log.distance ?? '';
+    document.getElementById('cardio-modal-calories').value = log.calories ?? '';
+    document.getElementById('cardio-modal-notes').value = log.notes || '';
+
+    document.getElementById('workout-modal-view').classList.add('hidden');
+    document.getElementById('workout-modal-edit').classList.add('hidden');
+    document.getElementById('workout-modal-cardio').classList.remove('hidden');
+    renderWorkoutModalActions('cardio-edit');
 }
 
 function renderWorkoutModalExercises() {
@@ -960,6 +1109,12 @@ function renderWorkoutModalActions(mode) {
         });
         mkBtn('btn btn-danger w-100 mt-2', 'Delete Workout').addEventListener('click', () => deleteWorkout(modalLogId));
         mkBtn('btn btn-secondary w-100 mt-2', 'Close').addEventListener('click', closeWorkoutModal);
+    } else if (mode === 'cardio-edit') {
+        mkBtn('btn btn-primary w-100', 'Save Changes').addEventListener('click', saveCardioFromModal);
+        mkBtn('btn btn-secondary w-100 mt-2', 'Cancel').addEventListener('click', () => {
+            const log = workoutLogs.find(l => l.id === modalLogId);
+            if (log) renderWorkoutModalView(log);
+        });
     } else {
         mkBtn('btn btn-primary w-100', 'Save Changes').addEventListener('click', saveWorkoutFromModal);
         mkBtn('btn btn-secondary w-100 mt-2', 'Cancel').addEventListener('click', () => {
@@ -967,6 +1122,52 @@ function renderWorkoutModalActions(mode) {
             if (log) renderWorkoutModalView(log);
         });
     }
+}
+
+async function saveCardioFromModal() {
+    const log = workoutLogs.find(l => l.id === modalLogId);
+    if (!log) return;
+
+    const duration = Number(document.getElementById('cardio-modal-duration').value) || 0;
+    if (!duration) {
+        showToast('Enter a duration in minutes.');
+        return;
+    }
+
+    let date = log.date;
+    const dateValue = document.getElementById('cardio-modal-date').value;
+    if (dateValue) {
+        const [y, m, d] = dateValue.split('-');
+        const timeValue = document.getElementById('cardio-modal-time').value;
+        const [hh, mm] = timeValue ? timeValue.split(':').map(Number) : [0, 0];
+        date = new Date(y, m - 1, d, hh || 0, mm || 0, 0).getTime();
+    }
+
+    const updated = {
+        ...log,
+        date,
+        durationMin: duration,
+        distance: document.getElementById('cardio-modal-distance').value.trim(),
+        calories: document.getElementById('cardio-modal-calories').value.trim(),
+        notes: document.getElementById('cardio-modal-notes').value.trim()
+    };
+
+    try {
+        await put('workout_logs', updated);
+    } catch (err) {
+        console.error(err);
+        showToast('Could not save changes. Please try again.');
+        return;
+    }
+
+    const idx = workoutLogs.findIndex(l => l.id === updated.id);
+    if (idx !== -1) workoutLogs[idx] = updated;
+    else workoutLogs.push(updated);
+    workoutLogs.sort((a, b) => b.date - a.date);
+
+    closeWorkoutModal();
+    renderHistory();
+    showToast('Cardio session updated!');
 }
 
 async function saveWorkoutFromModal() {

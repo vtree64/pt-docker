@@ -169,6 +169,25 @@ body {
 .muscle-name { font-size: 11px; font-weight: 600; margin-bottom: 4px; color: var(--text-secondary); text-transform: uppercase; }
 .muscle-days { font-size: 16px; font-weight: bold; }
 
+/* Cardio tracker (Indoor Cycling / Spin) */
+.cardio-tracker { display: flex; }
+.cardio-card {
+    flex: 1;
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.cardio-card.cardio-green { background-color: var(--success-bg); border-color: var(--success); }
+.cardio-card.cardio-yellow { background-color: var(--caution-bg); border-color: var(--caution); }
+.cardio-card.cardio-red { background-color: var(--warning-bg); border-color: var(--warning); }
+.cardio-name { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+.cardio-days { font-size: 22px; font-weight: bold; color: var(--text-primary); }
+.cardio-week { font-size: 12px; color: var(--text-secondary); }
+
 /* Buttons & Inputs */
 .btn { border: none; padding: 12px 16px; border-radius: 24px; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-block; text-align: center; }
 .btn-primary { background-color: var(--primary-color); color: #fff; }

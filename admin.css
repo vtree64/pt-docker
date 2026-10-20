@@ -150,6 +150,18 @@ select { cursor: pointer; }
     margin-bottom: 10px;
 }
 
+.reformer-toggle {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-primary);
+    margin-bottom: 0;
+}
+.reformer-toggle input { margin-top: 3px; }
+.reformer-toggle small { display: block; color: var(--text-secondary); font-size: 12px; }
+
 /* Buttons */
 .btn {
     appearance: none;

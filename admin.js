@@ -3,7 +3,7 @@ import {
     getAll, put, remove,
     saveExerciseAndTemplates, deleteExerciseCascade
 } from './db.js';
-import { CATEGORIES } from './seed.js';
+import { CATEGORIES, fillGroupedExerciseSelect, isReformerExercise } from './seed.js';
 
 const MUSCLES = ['Chest', 'Shoulders', 'Biceps', 'Triceps', 'Quads', 'Glutes', 'Hamstrings'];
 const NEW_EXERCISE = '__new_exercise__';
@@ -78,13 +78,11 @@ async function refresh() {
 
 function renderExerciseSelect() {
     const current = selectedExerciseId;
-    exerciseSelect.innerHTML = '';
-    const optNew = new Option('＋ Add new exercise…', NEW_EXERCISE);
-    exerciseSelect.add(optNew);
-    [...exercises].sort(byName).forEach(ex => exerciseSelect.add(new Option(ex.name, ex.id)));
+    fillGroupedExerciseSelect(exerciseSelect, exercises, {
+        leadingOptions: [['＋ Add new exercise…', NEW_EXERCISE]]
+    });
     // Restore selection if it still exists, otherwise keep the new option.
     if (current && exercises.some(e => e.id === current)) exerciseSelect.value = current;
-    else if (current === NEW_EXERCISE) exerciseSelect.value = NEW_EXERCISE;
     else exerciseSelect.value = NEW_EXERCISE;
 }
 
@@ -97,6 +95,7 @@ function renderExerciseForm() {
     const isNew = !ex;
     $('ex-name').value = ex?.name || '';
     $('ex-instructions').value = ex?.instructions || '';
+    $('ex-reformer').checked = ex ? isReformerExercise(ex) : false;
     $('ex-delete').disabled = isNew;
     $('exercise-error').textContent = '';
 
@@ -210,6 +209,7 @@ function collectExercise() {
         id: base.id || newId('ex'),
         name,
         instructions,
+        reformer: $('ex-reformer').checked,
         categoryLinks: links,
         muscleGroups: groups,
         categories: [...new Set(links.map(l => l.category))],
@@ -384,14 +384,12 @@ function renderRoutineModalExercises() {
         });
     }
 
-    // Add-exercise select: all exercises not already in the routine.
+    // Add-exercise select: all exercises not already in the routine, grouped.
     const sel = $('rt-add-select');
     const inRoutine = new Set(routineDraft.exercises.map(e => e.id));
-    sel.innerHTML = '';
-    sel.add(new Option('— Select exercise —', ''));
-    [...exercises].sort(byName)
-        .filter(e => !inRoutine.has(e.id))
-        .forEach(e => sel.add(new Option(e.name, e.id)));
+    fillGroupedExerciseSelect(sel, exercises.filter(e => !inRoutine.has(e.id)), {
+        leadingOptions: [['— Select exercise —', '']]
+    });
 }
 
 function addRoutineExercise() {

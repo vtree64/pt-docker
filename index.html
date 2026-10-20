@@ -48,7 +48,8 @@
                 <h2 class="section-title">Quick Log</h2>
                 <div class="template-list" id="template-list"></div>
                 <button class="btn btn-secondary mt-2 w-100" id="btn-freeform">Freeform Workout</button>
-                <button class="btn btn-secondary mt-2 w-100" id="btn-other">Other Workout (Cardio, etc)</button>
+                <button class="btn btn-secondary mt-2 w-100" id="btn-cardio">Cardio (Indoor Cycling / Spin)</button>
+                <button class="btn btn-secondary mt-2 w-100" id="btn-other">Other Workout</button>
             </div>
             
             <div id="workout-form-container" class="hidden">
@@ -79,6 +80,38 @@
                 </div>
                 <button class="btn btn-primary w-100 mt-4" id="btn-save-workout">Save Workout</button>
             </div>
+
+            <!-- Cardio Form (Indoor Cycling / Spin) -->
+            <div id="cardio-form-container" class="hidden">
+                <button class="btn btn-text mb-2" id="btn-back-cardio">← Back</button>
+                <h3>Cardio — Indoor Cycling / Spin</h3>
+                <div class="form-group mb-4 mt-2">
+                    <label style="font-size: 14px; font-weight: 600;">Date</label>
+                    <select id="cardio-date-select" class="w-100 mt-2 mb-2">
+                        <option value="today">Today</option>
+                        <option value="yesterday">Yesterday</option>
+                        <option value="other">Other...</option>
+                    </select>
+                    <input type="date" id="cardio-date-custom" class="w-100 hidden">
+                </div>
+                <div class="form-group mb-4">
+                    <label>Duration (minutes)</label>
+                    <input type="number" id="cardio-duration" class="w-100 mt-2" min="1" inputmode="numeric" placeholder="e.g. 45">
+                </div>
+                <div class="form-group mb-4">
+                    <label>Distance (miles, optional)</label>
+                    <input type="text" id="cardio-distance" class="w-100 mt-2" inputmode="decimal" placeholder="e.g. 12.5">
+                </div>
+                <div class="form-group mb-4">
+                    <label>Calories (optional)</label>
+                    <input type="text" id="cardio-calories" class="w-100 mt-2" inputmode="numeric" placeholder="e.g. 500">
+                </div>
+                <div class="form-group mb-4">
+                    <label>Notes</label>
+                    <textarea id="cardio-notes" class="w-100" rows="3" placeholder="How did it feel?"></textarea>
+                </div>
+                <button class="btn btn-primary w-100 mt-4" id="btn-save-cardio">Save Cardio Session</button>
+            </div>
         </section>
 
         <!-- Neck PT View -->
@@ -100,10 +133,16 @@
                 <!-- Muscle group days ago injected here -->
             </div>
 
+            <h2 class="section-title">Cardio</h2>
+            <div id="cardio-tracker" class="cardio-tracker mb-4">
+                <!-- Cardio tracker injected here -->
+            </div>
+
             <h2 class="section-title">Workout History</h2>
             <div class="history-filters mb-4">
                 <button class="filter-btn active" data-filter="all">All</button>
                 <button class="filter-btn" data-filter="pt">PT</button>
+                <button class="filter-btn" data-filter="cardio">Cardio</button>
                 <button class="filter-btn" data-filter="neck">Neck</button>
                 <button class="filter-btn" data-filter="other">Other</button>
             </div>
@@ -189,6 +228,32 @@
                     <div class="form-group mt-4">
                         <label>Pain/Discomfort Notes</label>
                         <textarea id="workout-modal-notes" class="w-100" rows="3" placeholder="How did you feel?"></textarea>
+                    </div>
+                </div>
+
+                <!-- Cardio edit (Indoor Cycling / Spin) -->
+                <div id="workout-modal-cardio" class="hidden">
+                    <div class="form-group mb-4">
+                        <label>Date</label>
+                        <input type="date" id="cardio-modal-date" class="mt-2">
+                        <label>Time</label>
+                        <input type="time" id="cardio-modal-time" class="mt-2">
+                    </div>
+                    <div class="form-group mb-4">
+                        <label>Duration (minutes)</label>
+                        <input type="number" id="cardio-modal-duration" class="w-100 mt-2" min="1" inputmode="numeric">
+                    </div>
+                    <div class="form-group mb-4">
+                        <label>Distance (miles, optional)</label>
+                        <input type="text" id="cardio-modal-distance" class="w-100 mt-2" inputmode="decimal">
+                    </div>
+                    <div class="form-group mb-4">
+                        <label>Calories (optional)</label>
+                        <input type="text" id="cardio-modal-calories" class="w-100 mt-2" inputmode="numeric">
+                    </div>
+                    <div class="form-group mb-4">
+                        <label>Notes</label>
+                        <textarea id="cardio-modal-notes" class="w-100" rows="3" placeholder="How did it feel?"></textarea>
                     </div>
                 </div>
 
