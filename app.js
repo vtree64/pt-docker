@@ -1,6 +1,6 @@
 import { setupExerciseEditor, categoryLinks, muscleGroups } from './editor.js';
 import { initDB, getAll, get, put, putAll, remove } from './db.js';
-import { CATEGORIES, checkAndSeedDB } from './seed.js';
+import { CATEGORIES, checkAndSeedDB, fillGroupedExerciseSelect } from './seed.js';
 
 // --- State ---
 let currentView = 'view-dashboard';
