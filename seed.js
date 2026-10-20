@@ -185,7 +185,10 @@ export function fillGroupedExerciseSelect(selectEl, exerciseList, { leadingOptio
     if (groups[id].length === 0) return;
     const optgroup = document.createElement('optgroup');
     optgroup.label = label;
-    groups[id].forEach(ex => optgroup.add(new Option(ex.name, ex.id)));
+    groups[id].forEach(ex => {
+      const opt = new Option(ex.name, ex.id);
+      optgroup.appendChild(opt);
+    });
     selectEl.appendChild(optgroup);
   });
 }
